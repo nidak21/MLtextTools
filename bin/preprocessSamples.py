@@ -19,10 +19,10 @@ import string
 import os
 import time
 import argparse
-import sklearnHelperLib as skHelper
-import utilsLib
+import MLsklearnHelper as skHelper
+from miscPyUtils import importPyFile
 
-DEFAULT_SAMPLEDATALIB  = "sampleDataLib"
+DEFAULT_SAMPLEDATALIB  = "MLbaseSample"
 DEFAULT_SAMPLE_TYPE  = "BaseSample"
 #-----------------------------------
 

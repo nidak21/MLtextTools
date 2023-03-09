@@ -14,15 +14,15 @@ import os.path
 import argparse
 import pickle
 
-import sklearnHelperLib as skHelper
-import utilsLib
-import tuningReportsLib as trl
+from miscPyUtils import importPyFile
+import MLtuningReports as trl
+import MLsklearnHelper as skHelper
 from sklearn.pipeline import Pipeline
 
 NUM_TOP_FEATURES=50	# number of highly weighted features to report
 PIPELINE_FILE = "goodPipelines.py"
 OUTPUT_PICKLE_FILE   = "goodModel.pkl"
-DEFAULT_SAMPLEDATALIB  = "sampleDataLib"
+DEFAULT_SAMPLEDATALIB  = "MLbaseSample"
 DEFAULT_SAMPLE_TYPE = "ClassifiedSample"
 #-----------------------
 
@@ -76,7 +76,7 @@ def parseCmdLine():
 #-----------------------
 
 args = parseCmdLine()
-sampleDataLib = utilsLib.importPyFile(args.sampleDataLib)
+sampleDataLib = importPyFile(args.sampleDataLib)
 
 #-----------------------
 def main():

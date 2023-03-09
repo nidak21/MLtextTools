@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 
 import unittest
-from utilsLib import *
+from MLtextUtils import *
 
 """
-These are tests for utilsLib.py
+These are tests for MLtextUtils.py
 
-Usage:   python test_utilsLib.py [-v]
+Usage:   python test_MLtextUtils.py [-v]
 """
 ######################################
 
 class TextTransformer_tests(unittest.TestCase):
     def setUp(self):
         self.THEmappings = [
-            TextMapping('THE', r'\b(?:the)\b', 'the_'),
-            TextMapping('THESE', r'\b(?:these)\b', 'these_'),
+            TextMapping('THE', r'\b(?:the)\b', 'the_', context=5),
+            TextMapping('THESE', r'\b(?:these)\b', 'these_', context=5),
         ]
 
     def test_distinctMappingNames(self):
@@ -44,28 +44,27 @@ class TextTransformer_tests(unittest.TestCase):
         text = "there are These things & these & these, and then the end"
         transformed = t.transformText(text)
         matches = t.getMatches()
-        #print(matches)
-        self.assertEqual(matches[1][1]['these'], 2)
-        self.assertEqual(matches[1][1]['These'], 1)
+        #print('\n' + t.getReport())
+        self.assertEqual(len(matches), 4)
+        self.assertEqual(matches[0].matchType, "THE")
+        self.assertEqual(matches[0].preText, "then ")
+        self.assertEqual(matches[0].postText, " end")
 
         transformed = t.transformText(text)             # should update counts
         matches = t.getMatches()
-        self.assertEqual(matches[1][1]['these'], 4)
-        self.assertEqual(matches[1][1]['These'], 2)
+        self.assertEqual(len(matches), 8)
 
     def test_resetMatches(self):
         t = TextTransformer(self.THEmappings)
         text = "there are These things & these & these, and then the end"
         transformed = t.transformText(text)
         matches = t.getMatches()
-        self.assertEqual(matches[1][1]['these'], 2)
-        self.assertEqual(matches[1][1]['These'], 1)
+        self.assertEqual(len(matches), 4)
 
         t.resetMatches()                                # should reset counts
         transformed = t.transformText(text)
         matches = t.getMatches()
-        self.assertEqual(matches[1][1]['these'], 2)
-        self.assertEqual(matches[1][1]['These'], 1)
+        self.assertEqual(len(matches), 4)
 
 # end class TextTransformer_tests
 ######################################

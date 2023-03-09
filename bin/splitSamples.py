@@ -23,11 +23,11 @@ import os
 import time
 import argparse
 import random
-import utilsLib
+from miscPyUtils import importPyFile
 
 DEFAULT_OUTPUT_RETAINED = 'retainedSamples.txt'
 DEFAULT_OUTPUT_LEFTOVER = 'leftoverSamples.txt'
-DEFAULT_SAMPLEDATALIB  = "sampleDataLib"
+DEFAULT_SAMPLEDATALIB  = "MLbaseSample"
 DEFAULT_SAMPLE_TYPE = 'BaseSample'
 #-----------------------------------
 
@@ -77,7 +77,7 @@ def parseCmdLine():
 #----------------------
 
 args = parseCmdLine()
-sampleDataLib = utilsLib.importPyFile(args.sampleDataLib)
+sampleDataLib = importPyFile(args.sampleDataLib)
 
 #----------------------
 def main():

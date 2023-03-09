@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """
 # Some helpful MLtextTools utilities
-# to run automated tests:  python test_utilsLib.py [-v]
+# to run automated tests:  python test_MLtextUtils.py [-v]
 """
 import sys
 import os.path
 import re
-import string
 import configparser
 
 #-----------------------------------
@@ -34,20 +33,6 @@ def getConfig(fileName,         # config filename to look for
 
     cp.read(cl + fileList)
     return cp
-#-----------------------------------
-
-def importPyFile(pyFile):
-    ''' Given a python file pathname (w/ or w/o .py), import the file
-        as a module
-    '''
-    pyDir, pyFile = os.path.split(pyFile)
-    if pyFile.endswith('.py'): pyFile = pyFile[:-3]
-
-    if pyDir != '': sys.path.insert(0, pyDir)
-    myModule =  __import__(pyFile)
-    if pyDir != '': del sys.path[0]
-
-    return myModule
 #-----------------------------------
 
 nonAsciiRE = re.compile(r'[^\x00-\x7f]')        # match non-ascii chars

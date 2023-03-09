@@ -1,77 +1,67 @@
-#!/bin/sh
-#
-#  Install
-###########################################################################
-#
-#  Purpose:  This script compiles all *.py files and copies both the *.py
-#            and the *.pyc files to the given directory.
-#
-#  Usage:  Install <library_directory>
-#
-#          where
-#
-#              library_directory is the full path of the directory where
-#                                the *.py and *.pyc files are copied.
-#
-###########################################################################
+#!/bin/bash
+# Install script
 
-cd `dirname $0`
+function Usage() {
+    cat - <<ENDTEXT
 
-#
-# Source the configuration file.
-#
-. ./Configuration
+$0 -dev|-live|-to directory
 
-#
-# Verify the arguments to the script.
-#
-if [ $# -ne 1 ]
-then
-    echo "Usage: $0 <library_directory>"
-    exit 1
-fi
-LIBRARY_DIRECTORY=$1
+    Install in the dev or live environment or into the specified directory.
 
-#
-# If the library directory does not exist, create it.
-#
-if [ ! -d ${LIBRARY_DIRECTORY} ]
-then
-    mkdir -p ${LIBRARY_DIRECTORY}
-    if [ $? -ne 0 ]
-    then
-        echo "Cannot create directory: ${LIBRARY_DIRECTORY}"
-        exit 1
+    -dev  --dev         - install in the dev environment
+    -live --live        - install in the live environment
+    -to --to directory  - install in the specified directory
+
+ENDTEXT
+    exit 5
+}
+function checkVarIsSet() {
+    if [ "${!1}" == "" ]; then
+        echo "$1" env var is not set
+        exit 5
     fi
-fi
-
-#
-# Compile all Python scripts.
-#
-${ANACONDAPYTHON} -m compileall -l -f .
-if [ $? -ne 0 ]
-then
-    echo "Error compiling Python source"
-    exit 1
-fi
-
-#
-# Set the proper permissions on the Python files.
-#
-chmod 775 *.py
-
-#
-# Copy the Python files to the given library directory.
-#
-for FILE in `ls *.py`
-do
-    rm -f ${LIBRARY_DIRECTORY}/${FILE}
-    cp -p ${FILE} ${LIBRARY_DIRECTORY}
-    if [ $? -ne 0 ]
-    then
-        echo "Cannot copy ${FILE} to ${LIBRARY_DIRECTORY}"
-        exit 1
-    fi
+}
+# cmd line args:
+baseDir=""              # to install into. Default is nowhere
+while [ $# -gt 0 ]; do
+    case "$1" in
+    -h|--help) Usage ;;
+    -dev|--dev)   checkVarIsSet DEV ;  baseDir="$DEV";  shift; ;;
+    -live|--live) checkVarIsSet LIVE; baseDir="$LIVE"; shift; ;;
+    -to|--to)     baseDir="$2"; shift; shift; ;;
+    -*|--*) echo "invalid option $1"; Usage ;;
+    *) break; ;;
+    esac
 done
 
-exit 0
+if [ "$baseDir" == "" ]; then Usage; fi
+
+# Places where things get installed
+binDir=$baseDir/bin
+libPythonDir=$baseDir/lib/python
+
+# Check install directories exist
+if [ ! -d $binDir ]; then
+    echo "$binDir" is not a directory
+    exit 5
+fi
+if [ ! -d $libPythonDir ]; then
+    echo "$libPythonDir" is not a directory
+    exit 5
+fi
+
+echo "Installing into $binDir"
+\cp -p bin/* $binDir
+saveCode="$?"
+if [ $saveCode != 0 ]; then
+    echo "Something went wrong. Exit code $saveCode"
+    exit $saveCode
+fi
+
+echo "Installing into $libPythonDir"
+\cp -p lib/*.py $libPythonDir
+saveCode="$?"
+if [ $saveCode != 0 ]; then
+    echo "Something went wrong. Exit code $saveCode"
+    exit $saveCode
+fi

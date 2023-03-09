@@ -19,13 +19,13 @@ import sys
 import string
 import pickle
 import argparse
-import utilsLib
-import sklearnHelperLib as skHelper
-import tuningReportsLib as trl
+from miscPyUtils import importPyFile
+import MLsklearnHelper as skHelper
+import MLtuningReports as trl
 
 PIPELINE_FILE = "model.pkl"
 DEFAULT_SAMPLE_TYPE  = "BaseSample"
-DEFAULT_SAMPLEDATALIB  = "sampleDataLib"
+DEFAULT_SAMPLEDATALIB  = "MLbaseSample"
 DEFAULT_OUTPUT_FIELDSEP  = "|"
 #-----------------------------------
 
@@ -83,7 +83,7 @@ def parseCmdLine():
 #----------------------
   
 args = parseCmdLine()
-sampleDataLib = utilsLib.importPyFile(args.sampleDataLib)
+sampleDataLib = importPyFile(args.sampleDataLib)
 
 #----------------------
 def main():

@@ -4,15 +4,15 @@ import sys
 import unittest
 import os
 import os.path
-from baseSampleDataLib import *
+from MLbaseSample import *
 
 """
-These are tests for baseSampleDataLib.py
+These are tests for MLbaseSample.py
 
-Usage:   python test_baseSampleDataLib.py [-v]
+Usage:   python test_MLbaseSample.py [-v]
 
 The pattern:
-    Each class in baseSampleDataLib.py has a corresponding *_tests class here to
+    Each class in MLbaseSample.py has a corresponding *_tests class here to
     exercise methods.
 """
 ######################################

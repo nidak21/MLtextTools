@@ -172,9 +172,11 @@ import os.path
 import pickle
 import argparse
 
-import utilsLib
-import sklearnHelperLib as skHelper
-import tuningReportsLib as trl
+from miscPyUtils import importPyFile
+
+import MLtextUtils
+import MLsklearnHelper as skHelper
+import MLtuningReports as trl
 
 from sklearn.base import clone
 import numpy as np
@@ -198,7 +200,7 @@ def parseCmdLine():
         for cmd line args, they are the 'dest' argument in add_argument()
         for non-cmd line args, they keys are set directly.
     """
-    config = utilsLib.getConfig('tuning.cfg')
+    config = MLtextUtils.getConfig('tuning.cfg')
 
     # config file params that are defaults for command line options
     TRAINING_SET      = config.get("TRAINING_DATA", "TRAINING_SET")
@@ -306,7 +308,7 @@ def parseCmdLine():
 args = parseCmdLine()	# make args available to this code and importers
 
 if args.sampleDataLibFile != "None":    # import the sampleDataLib
-    sampleDataLib = utilsLib.importPyFile(args.sampleDataLibFile)
+    sampleDataLib = importPyFile(args.sampleDataLibFile)
 
 ############################################################
 # Main class - encapsulates the tuning process

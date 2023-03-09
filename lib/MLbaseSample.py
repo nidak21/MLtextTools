@@ -5,15 +5,13 @@
 #
 # Automated tests for this module are available:
 #  cd test
-#  python test_baseSampleDataLib.py -v
+#  python test_MLbaseSample.py -v
 #
 import sys
-import os.path
-import string
 import re
 from copy import copy
 import inspect
-import utilsLib
+import MLtextUtils
 
 #-----------------------------------
 #
@@ -212,7 +210,7 @@ class BaseSample (object):
         '''
         Remove URLs, lower case everything,
         '''
-        self.setField('text', utilsLib.removeURLsLower(self.getField('text')))
+        self.setField('text',MLtextUtils.removeURLsLower(self.getField('text')))
         return self
     # ---------------------------
 
@@ -222,7 +220,7 @@ class BaseSample (object):
             removing punctuation.
         Makes it easier to examine the tokens/features
         """
-        self.setField('text', utilsLib.tokenPerLine(self.getField('text')))
+        self.setField('text', MLtextUtils.tokenPerLine(self.getField('text')))
         return self
     # ---------------------------
 

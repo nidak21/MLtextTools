@@ -5,10 +5,10 @@
 #
 import sys
 import argparse
-import utilsLib
+from miscPyUtils import importPyFile
 
 DEFAULT_SAMPLE_TYPE  = "BaseSample"
-DEFAULT_SAMPLEDATALIB  = "sampleDataLib"
+DEFAULT_SAMPLEDATALIB  = "MLbaseSample"
 
 def parseCmdLine():
     parser = argparse.ArgumentParser( \
@@ -46,7 +46,7 @@ def parseCmdLine():
 #---------------------------
 
 args = parseCmdLine()
-sampleDataLib = utilsLib.importPyFile(args.sampleDataLib)
+sampleDataLib = importPyFile(args.sampleDataLib)
 
 #---------------------------
 def main():
