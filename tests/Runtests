@@ -1,0 +1,46 @@
+#!/bin/bash
+# Run automated tests script
+
+# set default values
+testFiles=$(\ls test_*.py)   # default set of test files
+prependPath="../lib"
+verbose=-v
+
+function Usage() {
+    cat - <<ENDTEXT
+
+$0 [-v|-q|-p|--pythonpath pathString] [list of test files to run]
+
+    Run the automated tests directing all output to stdout.
+    Default is to run all test_*.py
+
+    -p|--pythonpath  - prepend the specified pathString to PYTHONPATH
+                       Default: $prependPath
+    -v|-q            - verbose or quiet. Default: $verbose
+
+ENDTEXT
+    exit 5
+}
+# cmd line args:
+while [ $# -gt 0 ]; do
+    case "$1" in
+    -h|--help)       Usage ;;
+    -p|--pythonpath) prependPath=$2; shift; shift; ;;
+    -v|-q)           verbose=$1; shift; ;;
+    -*|--*) echo "invalid option $1"; Usage ;;
+    *) break; ;;
+    esac
+done
+if [ "$*" != "" ]; then # anything left on cmd line must be test file names
+    testFiles=$*
+fi
+
+# run the tests
+PYTHONPATH=$prependPath:$PYTHONPATH
+date
+echo PYTHONPATH=$PYTHONPATH
+
+for tf in $testFiles; do
+    echo Running $tf
+    python $tf $verbose 2>&1
+done
