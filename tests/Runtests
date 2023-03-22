@@ -3,18 +3,21 @@
 
 # set default values
 testFiles=$(\ls test_*.py)   # default set of test files
-prependPath="../lib"
+prependPath="../bin"
+prependPyPath="../lib"
 verbose=-v
 
 function Usage() {
     cat - <<ENDTEXT
 
-$0 [-v|-q|-p|--pythonpath pathString] [list of test files to run]
+$0 [-v|-q] [--pythonpath pathString] [--path pathString] [test files to run]
 
     Run the automated tests directing all output to stdout.
     Default is to run all test_*.py
 
-    -p|--pythonpath  - prepend the specified pathString to PYTHONPATH
+    --pythonpath  - prepend the specified pathString to PYTHONPATH
+                       Default: $prependPyPath
+    --path        - prepend the specified pathString to PYTHONPATH
                        Default: $prependPath
     -v|-q            - verbose or quiet. Default: $verbose
 
@@ -25,7 +28,8 @@ ENDTEXT
 while [ $# -gt 0 ]; do
     case "$1" in
     -h|--help)       Usage ;;
-    -p|--pythonpath) prependPath=$2; shift; shift; ;;
+    -p|--pythonpath) prependPyPath=$2; shift; shift; ;;
+    -p|--path)       prependPath=$2; shift; shift; ;;
     -v|-q)           verbose=$1; shift; ;;
     -*|--*) echo "invalid option $1"; Usage ;;
     *) break; ;;
@@ -36,8 +40,10 @@ if [ "$*" != "" ]; then # anything left on cmd line must be test file names
 fi
 
 # run the tests
-PYTHONPATH=$prependPath:$PYTHONPATH
+PATH=$prependPath:$PATH
+PYTHONPATH=$prependPyPath:$PYTHONPATH
 date
+echo PATH=$PATH
 echo PYTHONPATH=$PYTHONPATH
 
 for tf in $testFiles; do
