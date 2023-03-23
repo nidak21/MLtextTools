@@ -10,15 +10,10 @@ from miscPyUtils import runShCommand
 from testSample import *
 
 # global settings
-REMOVETMPFILES = True           # should we delete the files below, after tests?
-beVerbose = True                # how much test output to write to stdout
+REMOVETMPFILES = False          # should we delete the files below, after tests?
+beVerbose = '-v' in sys.argv    # how much test output to write to stdout
 SAMPLEDATALIB = './testSample.py'  # location of the test sampledata lib
 SAMPLEDATALIBPARAM = '--sampledatalib %s' % SAMPLEDATALIB
-
-# define file names to operate on
-SAMPLEFILE = 'sampleFile.txt'
-RETAINEDFILE = 'sampleFile.retained.txt'
-LEFTOVERFILE = 'sampleFile.leftover.txt'
 
 # The global SampleSet used in most tests
 sampleSet = None
@@ -67,24 +62,28 @@ def reportWhichExecutable(fileName):
 
 class SplitSamples_tests(unittest.TestCase):
     def setUp(self):
+        self.pgm = 'splitSamples.py'
+        reportWhichExecutable(self.pgm)
+        self.SAMPLEFILE = 'sampleFile.txt'
+        self.RETAINEDFILE = 'sampleFile.retained.txt'
+        self.LEFTOVERFILE = 'sampleFile.leftover.txt'
         populateSampleSet()
-        sampleSet.write(SAMPLEFILE)
+        sampleSet.write(self.SAMPLEFILE)
 
     def tearDown(self):
         # would be nice to know if any tests failed, and keep these files if
         # so. But I don't see how to do that yet.
         if REMOVETMPFILES:
-            os.remove(SAMPLEFILE)
-            os.remove(RETAINEDFILE)
-            os.remove(LEFTOVERFILE)
+            os.remove(self.SAMPLEFILE)
+            os.remove(self.RETAINEDFILE)
+            os.remove(self.LEFTOVERFILE)
         
-    def test_nullTest(self):
-        pgm = 'splitSamples.py'
-        reportWhichExecutable(pgm)
+    def test_withSampleDataLib(self):
 
         # via a few tries, this seed splits into 3 retained, 7 leftovers
         cmd = '%s %s -f .25 --seed 1 --retainedfile %s --leftoverfile %s %s' \
-        % (pgm, SAMPLEDATALIBPARAM, RETAINEDFILE, LEFTOVERFILE, SAMPLEFILE)
+        % (self.pgm, SAMPLEDATALIBPARAM, self.RETAINEDFILE, self.LEFTOVERFILE,
+                                                            self.SAMPLEFILE)
 
         retCode, stout, sterr = runShCommand(cmd)
 
@@ -96,12 +95,45 @@ class SplitSamples_tests(unittest.TestCase):
 
         self.assertEqual(retCode, 0)
 
-        retainedSampleSet = ClassifiedSampleSet().read(RETAINEDFILE)
+        retainedSampleSet = ClassifiedSampleSet().read(self.RETAINEDFILE)
         self.assertEqual(retainedSampleSet.getNumSamples(), 3)
 
-        leftoverSampleSet = ClassifiedSampleSet().read(LEFTOVERFILE)
+        leftoverSampleSet = ClassifiedSampleSet().read(self.LEFTOVERFILE)
         self.assertEqual(leftoverSampleSet.getNumSamples(), 7)
 # end class SplitSamples_tests --------------------------------------------
+
+class PreprocessSamples_tests(unittest.TestCase):
+    def setUp(self):
+        self.pgm = 'preprocessSamples.py'
+        reportWhichExecutable(self.pgm)
+        self.SAMPLEFILE = 'sampleFile.txt'
+        self.OUTPUTFILE = 'sampleFile.preprocessed.txt'
+        populateSampleSet()
+        sampleSet.write(self.SAMPLEFILE)
+
+    def tearDown(self):
+        # would be nice to know if any tests failed, and keep these files if
+        # so. But I don't see how to do that yet.
+        if REMOVETMPFILES:
+            os.remove(self.SAMPLEFILE)
+            os.remove(self.OUTPUTFILE)
+        
+    def test_withSampleDataLib(self):
+
+        # via a few tries, this seed splits into 3 retained, 7 leftovers
+        cmd = '%s -p tokenPerLine %s %s > %s' \
+        % (self.pgm, SAMPLEDATALIBPARAM, self.SAMPLEFILE, self.OUTPUTFILE)
+
+        retCode, stout, sterr = runShCommand(cmd)
+
+        verbose('-------- Stderr: --------\n')
+        verbose(sterr)
+        verbose('-------- Stdout: --------\n')
+        verbose(stout)
+        verbose('--------\n')
+
+        self.assertEqual(retCode, 0)
+# end class PreprocessSamples_tests --------------------------------------------
 
 def verbose(s):
     if beVerbose:

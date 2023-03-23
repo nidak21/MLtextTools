@@ -66,7 +66,7 @@ def parseCmdLine():
 #----------------------
 
 args = parseCmdLine()
-sampleDataLib = utilsLib.importPyFile(args.sampleDataLib)
+sampleDataLib = importPyFile(args.sampleDataLib)
 
 #----------------------
 def main():
