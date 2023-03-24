@@ -142,7 +142,7 @@ def getPipeline():
     if ext == '.py':
         verbose("Importing model source file '%s'\n" % \
                                                 os.path.abspath(fileName))
-        pipeline = utilsLib.importPyFile(fileName).pipeline
+        pipeline = importPyFile(fileName).pipeline
 
         if type(pipeline) == type([]):
             pipeline = pipeline[0]

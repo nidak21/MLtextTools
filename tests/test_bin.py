@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 
+# tests for the scripts in MLtextTools/bin
+
 import sys
 import unittest
 import os
 import os.path
 import time
 from miscPyUtils import runShCommand
-#import MLbaseSample
 from testSample import *
 
 # global settings
@@ -20,6 +21,7 @@ sampleSet = None
 
 def populateSampleSet():
     """ Populate the global sampleSet with some test samples.
+        "color" is just an arbitrary extra info field.
     """
     global sampleSet
     rcds = [ \
@@ -183,6 +185,74 @@ class SplitSamples_tests(unittest.TestCase):
         leftoverSampleSet = ClassifiedSampleSet().read(self.LEFTOVERFILE)
         self.assertEqual(leftoverSampleSet.getNumSamples(), 7)
 # end class SplitSamples_tests --------------------------------------------
+
+class TrainModel_tests(unittest.TestCase):
+    pgm = 'trainModel.py'
+    @classmethod
+    def setUpClass(cls):
+        reportWhichExecutable(cls.pgm)
+       
+    def setUp(self):
+        self.SAMPLEFILE = 'sampleFile.txt'
+        #self.OUTPUTFILE = 'sampleFile.preprocessed.txt'
+        self.PIPELINEFILE = 'testPipeline.py'
+        self.OUTPUTPKLFILE = 'testPipeline.pkl'
+        self.FEATUREFILE = 'testPipeline.features'
+        populateSampleSet()
+        sampleSet.write(self.SAMPLEFILE)
+
+    def tearDown(self):
+        # would be nice to know if any tests failed, and keep these files if
+        # so. But I don't see how to do that yet.
+        if REMOVETMPFILES:
+            os.remove(self.SAMPLEFILE)
+            #os.remove(self.OUTPUTFILE)
+            os.remove(self.OUTPUTPKLFILE)
+            os.remove(self.FEATUREFILE)
+        
+    def test_withSampleDataLib(self):
+        cmd = '%s -m %s -o %s -f %s %s %s' \
+        % (self.pgm, self.PIPELINEFILE, self.OUTPUTPKLFILE, self.FEATUREFILE,
+                    SAMPLEDATALIBPARAM, self.SAMPLEFILE, )
+
+        retCode, stout, sterr = runShCommand(cmd)
+        reportCmdDetails(cmd, retCode, stout, sterr)
+        self.assertEqual(retCode, 0)
+# end class TrainModel_tests --------------------------------------------
+
+class Predict_tests(unittest.TestCase):
+    pgm = 'predict.py'
+    @classmethod
+    def setUpClass(cls):
+        reportWhichExecutable(cls.pgm)
+       
+    def setUp(self):
+        self.SAMPLEFILE = 'sampleFile.txt'
+        self.MODELFILE = 'testPipeline.pkl'
+        self.PREDICTIONS = 'testPipeline.predictions'
+        self.PERFORMANCE = 'testPipeline.performance'
+        populateSampleSet()
+        sampleSet.write(self.SAMPLEFILE)
+
+    def tearDown(self):
+        # would be nice to know if any tests failed, and keep these files if
+        # so. But I don't see how to do that yet.
+        if REMOVETMPFILES:
+            os.remove(self.SAMPLEFILE)
+            os.remove(self.MODELFILE)
+            os.remove(self.PREDICTIONS)
+            os.remove(self.PERFORMANCE)
+        
+    def test_withSampleDataLib(self):
+        # run predictions on the training set
+        cmd = '%s -m %s --performance %s  %s %s > %s' \
+        % (self.pgm, self.MODELFILE, self.PERFORMANCE, 
+                    SAMPLEDATALIBPARAM, self.SAMPLEFILE, self.PREDICTIONS )
+
+        retCode, stout, sterr = runShCommand(cmd)
+        reportCmdDetails(cmd, retCode, stout, sterr)
+        self.assertEqual(retCode, 0)
+# end class Predict_tests --------------------------------------------
 
 if __name__ == '__main__':
     unittest.main()
