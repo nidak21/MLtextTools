@@ -52,18 +52,108 @@ def populateSampleSet():
         sampleSet.addSample(sample)
 # end populateSampleSet()--------------------------------------------
 
+def verbose(s):
+    if beVerbose:
+        sys.stdout.write(s)
+
 def reportWhichExecutable(fileName):
     """ Write to stdout the name of the executable that will be run
     """
     retCode, stout, sterr = runShCommand('which %s' % fileName)
-    print('\n\t' + '-' * 20)
-    print('\tRunning Tests For: ' + stout)
-# end reportWhichExecutable()--------------------------------------------
+    print('\n-------- Running Tests For: ' + stout)
+
+def reportCmdDetails(cmd, retCode, stout, sterr):
+    """ if verbose, write out details of the cmd and its output to stdout
+    """
+    verbose("cmd: '%s'\n" % cmd)
+    verbose("retCode: %d\n" % retCode)
+    verbose('-------- Stdout: --------\n')
+    verbose(stout)
+    verbose('-------- Stderr: --------\n')
+    verbose(sterr)
+    verbose('--------\n')
+
+# -------- TestCases: --------------------------------------------
+
+class GetSamples_tests(unittest.TestCase):
+    pgm = 'getSamples.py'
+    @classmethod
+    def setUpClass(cls):
+        reportWhichExecutable(cls.pgm)
+       
+    def setUp(self):
+        self.SAMPLEFILE = 'sampleFile.txt'
+        populateSampleSet()
+        sampleSet.write(self.SAMPLEFILE)
+
+    def tearDown(self):
+        # would be nice to know if any tests failed, and keep these files if
+        # so. But I don't see how to do that yet.
+        if REMOVETMPFILES:
+            os.remove(self.SAMPLEFILE)
+        
+    def test_withSampleDataLib_find0(self):
+        # ID that is not in the sampleSet - should return 0 samples
+        cmd = '%s %s --oneline 64 < %s' \
+        % (self.pgm, SAMPLEDATALIBPARAM, self.SAMPLEFILE, )
+
+        retCode, stout, sterr = runShCommand(cmd)
+        reportCmdDetails(cmd, retCode, stout, sterr)
+        self.assertEqual(retCode, 0)
+
+        numLines = stout.count('\n')
+        self.assertEqual(numLines, 0)
+
+    def test_withSampleDataLib_find2(self):
+        # 2 IDs in the sampleSet
+        cmd = '%s %s --oneline 3 7 < %s' \
+        % (self.pgm, SAMPLEDATALIBPARAM, self.SAMPLEFILE, )
+
+        retCode, stout, sterr = runShCommand(cmd)
+        reportCmdDetails(cmd, retCode, stout, sterr)
+        self.assertEqual(retCode, 0)
+
+        # the two samples should be one line each in stout
+        numLines = stout.count('\n')
+        self.assertEqual(numLines, 2)
+# end class GetSamples_tests --------------------------------------------
+
+class PreprocessSamples_tests(unittest.TestCase):
+    pgm = 'preprocessSamples.py'
+    @classmethod
+    def setUpClass(cls):
+        reportWhichExecutable(cls.pgm)
+       
+    def setUp(self):
+        self.SAMPLEFILE = 'sampleFile.txt'
+        self.OUTPUTFILE = 'sampleFile.preprocessed.txt'
+        populateSampleSet()
+        sampleSet.write(self.SAMPLEFILE)
+
+    def tearDown(self):
+        # would be nice to know if any tests failed, and keep these files if
+        # so. But I don't see how to do that yet.
+        if REMOVETMPFILES:
+            os.remove(self.SAMPLEFILE)
+            os.remove(self.OUTPUTFILE)
+        
+    def test_withSampleDataLib(self):
+        # just a simple preprocessing step
+        cmd = '%s -p tokenPerLine %s %s > %s' \
+        % (self.pgm, SAMPLEDATALIBPARAM, self.SAMPLEFILE, self.OUTPUTFILE)
+
+        retCode, stout, sterr = runShCommand(cmd)
+        reportCmdDetails(cmd, retCode, stout, sterr)
+        self.assertEqual(retCode, 0)
+# end class PreprocessSamples_tests --------------------------------------------
 
 class SplitSamples_tests(unittest.TestCase):
+    pgm = 'splitSamples.py'
+    @classmethod
+    def setUpClass(cls):
+        reportWhichExecutable(cls.pgm)
+       
     def setUp(self):
-        self.pgm = 'splitSamples.py'
-        reportWhichExecutable(self.pgm)
         self.SAMPLEFILE = 'sampleFile.txt'
         self.RETAINEDFILE = 'sampleFile.retained.txt'
         self.LEFTOVERFILE = 'sampleFile.leftover.txt'
@@ -79,20 +169,12 @@ class SplitSamples_tests(unittest.TestCase):
             os.remove(self.LEFTOVERFILE)
         
     def test_withSampleDataLib(self):
-
         # via a few tries, this seed splits into 3 retained, 7 leftovers
         cmd = '%s %s -f .25 --seed 1 --retainedfile %s --leftoverfile %s %s' \
         % (self.pgm, SAMPLEDATALIBPARAM, self.RETAINEDFILE, self.LEFTOVERFILE,
                                                             self.SAMPLEFILE)
-
         retCode, stout, sterr = runShCommand(cmd)
-
-        verbose('-------- Stderr: --------\n')
-        verbose(sterr)
-        verbose('-------- Stdout: --------\n')
-        verbose(stout)
-        verbose('--------\n')
-
+        reportCmdDetails(cmd, retCode, stout, sterr)
         self.assertEqual(retCode, 0)
 
         retainedSampleSet = ClassifiedSampleSet().read(self.RETAINEDFILE)
@@ -101,43 +183,6 @@ class SplitSamples_tests(unittest.TestCase):
         leftoverSampleSet = ClassifiedSampleSet().read(self.LEFTOVERFILE)
         self.assertEqual(leftoverSampleSet.getNumSamples(), 7)
 # end class SplitSamples_tests --------------------------------------------
-
-class PreprocessSamples_tests(unittest.TestCase):
-    def setUp(self):
-        self.pgm = 'preprocessSamples.py'
-        reportWhichExecutable(self.pgm)
-        self.SAMPLEFILE = 'sampleFile.txt'
-        self.OUTPUTFILE = 'sampleFile.preprocessed.txt'
-        populateSampleSet()
-        sampleSet.write(self.SAMPLEFILE)
-
-    def tearDown(self):
-        # would be nice to know if any tests failed, and keep these files if
-        # so. But I don't see how to do that yet.
-        if REMOVETMPFILES:
-            os.remove(self.SAMPLEFILE)
-            os.remove(self.OUTPUTFILE)
-        
-    def test_withSampleDataLib(self):
-
-        # via a few tries, this seed splits into 3 retained, 7 leftovers
-        cmd = '%s -p tokenPerLine %s %s > %s' \
-        % (self.pgm, SAMPLEDATALIBPARAM, self.SAMPLEFILE, self.OUTPUTFILE)
-
-        retCode, stout, sterr = runShCommand(cmd)
-
-        verbose('-------- Stderr: --------\n')
-        verbose(sterr)
-        verbose('-------- Stdout: --------\n')
-        verbose(stout)
-        verbose('--------\n')
-
-        self.assertEqual(retCode, 0)
-# end class PreprocessSamples_tests --------------------------------------------
-
-def verbose(s):
-    if beVerbose:
-        sys.stdout.write(s)
 
 if __name__ == '__main__':
     unittest.main()
