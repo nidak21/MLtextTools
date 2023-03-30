@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 # tests for the scripts in MLtextTools/bin
+# to run:   python test_bin.py [-v]
 
 import sys
 import unittest
@@ -10,8 +11,29 @@ import time
 from miscPyUtils import runShCommand
 from testSample import *
 
+"""
+These tests run programs in MLtextTools/bin via runShCommand.
+
+If you run these with -v, the tests output each shell command run and its
+stdout and stderr so you can see what is going on.
+
+They use
+    testSample.py, a sampleDataLib, that defines a TestSample Class.
+    testPipeline.py that defines a Pipeline to train.
+
+They generate sample files, trained model pkl files, and other output files
+from trainModel.py and predict.py.
+
+All generated files get put in ./tmp/
+
+At the moment, all the tests just check the return code from running the
+scripts and succeed if it is zero.
+We don't yet do much validation of the generated files.
+"""
+
 # global settings
-REMOVETMPFILES = False          # should we delete the files below, after tests?
+TMPDIR = './tmp'            # path to tmp directory for generated files
+REMOVETMPFILES = False      # should we delete generated tmp files, after tests?
 beVerbose = '-v' in sys.argv    # how much test output to write to stdout
 SAMPLEDATALIB = './testSample.py'  # location of the test sampledata lib
 SAMPLEDATALIBPARAM = '--sampledatalib %s' % SAMPLEDATALIB
@@ -75,6 +97,19 @@ def reportCmdDetails(cmd, retCode, stout, sterr):
     verbose(sterr)
     verbose('--------\n')
 
+def tmpFile(name):
+    """ Return the pathname in the tmp directory for the specified filename
+        Remove the file from the tmp directory if it already exists
+    """
+    if not os.path.isdir(TMPDIR):
+        verbose("mkdir %s\n" % os.path.abspath(TMPDIR))
+        os.mkdir(TMPDIR)
+
+    pathName = os.path.join(TMPDIR, name)
+    if os.path.exists(pathName):
+        os.remove(pathName)
+    return pathName
+
 # -------- TestCases: --------------------------------------------
 
 class GetSamples_tests(unittest.TestCase):
@@ -84,7 +119,7 @@ class GetSamples_tests(unittest.TestCase):
         reportWhichExecutable(cls.pgm)
        
     def setUp(self):
-        self.SAMPLEFILE = 'sampleFile.txt'
+        self.SAMPLEFILE = tmpFile('sampleFile.txt')
         populateSampleSet()
         sampleSet.write(self.SAMPLEFILE)
 
@@ -120,6 +155,52 @@ class GetSamples_tests(unittest.TestCase):
         self.assertEqual(numLines, 2)
 # end class GetSamples_tests --------------------------------------------
 
+class Predict_tests(unittest.TestCase):
+    pgm = 'predict.py'
+    @classmethod
+    def setUpClass(cls):
+        reportWhichExecutable(cls.pgm)
+       
+    def setUp(self):
+        self.PIPELINEFILE = 'testPipeline.py'
+        self.SAMPLEFILE  = tmpFile('sampleFile.txt')
+        self.MODELFILE   = tmpFile('modelForPredict.pkl')
+        self.PREDICTIONS = tmpFile('testPipeline.predictions')
+        self.PERFORMANCE = tmpFile('testPipeline.performance')
+        populateSampleSet()
+        sampleSet.write(self.SAMPLEFILE)
+
+    def tearDown(self):
+        # would be nice to know if any tests failed, and keep these files if
+        # so. But I don't see how to do that yet.
+        if REMOVETMPFILES:
+            os.remove(self.SAMPLEFILE)
+            os.remove(self.MODELFILE)
+            os.remove(self.PREDICTIONS)
+            os.remove(self.PERFORMANCE)
+        
+    def trainModel(self):
+        cmd = 'trainModel.py -m %s -o %s %s %s' \
+        % (self.PIPELINEFILE, self.MODELFILE, SAMPLEDATALIBPARAM,
+            self.SAMPLEFILE, )
+
+        retCode, stout, sterr = runShCommand(cmd)
+        reportCmdDetails(cmd, retCode, stout, sterr)
+        self.assertEqual(retCode, 0)
+
+    def test_withSampleDataLib(self):
+        self.trainModel()
+
+        # run predictions on the training set
+        cmd = '%s -m %s --performance %s  %s %s > %s' \
+        % (self.pgm, self.MODELFILE, self.PERFORMANCE, 
+                    SAMPLEDATALIBPARAM, self.SAMPLEFILE, self.PREDICTIONS )
+
+        retCode, stout, sterr = runShCommand(cmd)
+        reportCmdDetails(cmd, retCode, stout, sterr)
+        self.assertEqual(retCode, 0)
+# end class Predict_tests --------------------------------------------
+
 class PreprocessSamples_tests(unittest.TestCase):
     pgm = 'preprocessSamples.py'
     @classmethod
@@ -127,8 +208,8 @@ class PreprocessSamples_tests(unittest.TestCase):
         reportWhichExecutable(cls.pgm)
        
     def setUp(self):
-        self.SAMPLEFILE = 'sampleFile.txt'
-        self.OUTPUTFILE = 'sampleFile.preprocessed.txt'
+        self.SAMPLEFILE = tmpFile('sampleFile.txt')
+        self.OUTPUTFILE = tmpFile('sampleFile.preprocessed.txt')
         populateSampleSet()
         sampleSet.write(self.SAMPLEFILE)
 
@@ -156,9 +237,9 @@ class SplitSamples_tests(unittest.TestCase):
         reportWhichExecutable(cls.pgm)
        
     def setUp(self):
-        self.SAMPLEFILE = 'sampleFile.txt'
-        self.RETAINEDFILE = 'sampleFile.retained.txt'
-        self.LEFTOVERFILE = 'sampleFile.leftover.txt'
+        self.SAMPLEFILE   = tmpFile('sampleFile.txt')
+        self.RETAINEDFILE = tmpFile('sampleFile.retained.txt')
+        self.LEFTOVERFILE = tmpFile('sampleFile.leftover.txt')
         populateSampleSet()
         sampleSet.write(self.SAMPLEFILE)
 
@@ -193,11 +274,10 @@ class TrainModel_tests(unittest.TestCase):
         reportWhichExecutable(cls.pgm)
        
     def setUp(self):
-        self.SAMPLEFILE = 'sampleFile.txt'
-        #self.OUTPUTFILE = 'sampleFile.preprocessed.txt'
-        self.PIPELINEFILE = 'testPipeline.py'
-        self.OUTPUTPKLFILE = 'testPipeline.pkl'
-        self.FEATUREFILE = 'testPipeline.features'
+        self.PIPELINEFILE  = 'testPipeline.py'
+        self.SAMPLEFILE    = tmpFile('sampleFile.txt')
+        self.OUTPUTPKLFILE = tmpFile('testPipeline.pkl')
+        self.FEATUREFILE   = tmpFile('testPipeline.features')
         populateSampleSet()
         sampleSet.write(self.SAMPLEFILE)
 
@@ -206,7 +286,6 @@ class TrainModel_tests(unittest.TestCase):
         # so. But I don't see how to do that yet.
         if REMOVETMPFILES:
             os.remove(self.SAMPLEFILE)
-            #os.remove(self.OUTPUTFILE)
             os.remove(self.OUTPUTPKLFILE)
             os.remove(self.FEATUREFILE)
         
@@ -219,40 +298,6 @@ class TrainModel_tests(unittest.TestCase):
         reportCmdDetails(cmd, retCode, stout, sterr)
         self.assertEqual(retCode, 0)
 # end class TrainModel_tests --------------------------------------------
-
-class Predict_tests(unittest.TestCase):
-    pgm = 'predict.py'
-    @classmethod
-    def setUpClass(cls):
-        reportWhichExecutable(cls.pgm)
-       
-    def setUp(self):
-        self.SAMPLEFILE = 'sampleFile.txt'
-        self.MODELFILE = 'testPipeline.pkl'
-        self.PREDICTIONS = 'testPipeline.predictions'
-        self.PERFORMANCE = 'testPipeline.performance'
-        populateSampleSet()
-        sampleSet.write(self.SAMPLEFILE)
-
-    def tearDown(self):
-        # would be nice to know if any tests failed, and keep these files if
-        # so. But I don't see how to do that yet.
-        if REMOVETMPFILES:
-            os.remove(self.SAMPLEFILE)
-            os.remove(self.MODELFILE)
-            os.remove(self.PREDICTIONS)
-            os.remove(self.PERFORMANCE)
-        
-    def test_withSampleDataLib(self):
-        # run predictions on the training set
-        cmd = '%s -m %s --performance %s  %s %s > %s' \
-        % (self.pgm, self.MODELFILE, self.PERFORMANCE, 
-                    SAMPLEDATALIBPARAM, self.SAMPLEFILE, self.PREDICTIONS )
-
-        retCode, stout, sterr = runShCommand(cmd)
-        reportCmdDetails(cmd, retCode, stout, sterr)
-        self.assertEqual(retCode, 0)
-# end class Predict_tests --------------------------------------------
 
 if __name__ == '__main__':
     unittest.main()
