@@ -34,7 +34,7 @@ We don't yet do much validation of the generated files.
 # global settings
 TMPDIR = './tmp'            # path to tmp directory for generated files
 REMOVETMPFILES = False      # should we delete generated tmp files, after tests?
-beVerbose = '-v' in sys.argv    # how much test output to write to stdout
+beVerbose = '-v' in sys.argv    # how much test output to write to stderr
 SAMPLEDATALIB = './testSample.py'  # location of the test sampledata lib
 SAMPLEDATALIBPARAM = '--sampledatalib %s' % SAMPLEDATALIB
 
@@ -78,22 +78,29 @@ def populateSampleSet():
 
 def verbose(s):
     if beVerbose:
-        sys.stdout.write(s)
-
-def reportWhichExecutable(fileName):
-    """ Write to stdout the name of the executable that will be run
-    """
-    retCode, stout, sterr = runShCommand('which %s' % fileName)
-    print('\n-------- Running Tests For: ' + stout)
+        sys.stderr.write(s)
 
 def reportCmdDetails(cmd, retCode, stout, sterr):
-    """ if verbose, write out details of the cmd and its output to stdout
+    """ if verbose, write out details of the cmd and its output to stderr
+        so it is intermingled with UnitTest output.
     """
-    verbose("cmd: '%s'\n" % cmd)
-    verbose("retCode: %d\n" % retCode)
-    verbose('-------- Stdout: --------\n')
+    # get pathName of executable that will be run
+    fileName = cmd.split()[0]
+    rcode, pathName, err = runShCommand('which %s' % fileName)
+    if pathName == '':          # command not found in the shell PATH
+        pathName = 'command not found on PATH'
+    else:
+        pathName = pathName[:-1]        # remove '\n' at the end
+        pathName = os.path.abspath(pathName)
+
+    verbose('\n')
+    verbose("Cmd: '%s'\n" % cmd)
+    verbose('Which: %s\n' % pathName)
+    verbose("RetCode: %d\n" % retCode)
+    verbose('\t-------- Stdout: --------\n')
     verbose(stout)
-    verbose('-------- Stderr: --------\n')
+    verbose('--------\n')
+    verbose('\t-------- Stderr: --------\n')
     verbose(sterr)
     verbose('--------\n')
 
@@ -114,9 +121,6 @@ def tmpFile(name):
 
 class GetSamples_tests(unittest.TestCase):
     pgm = 'getSamples.py'
-    @classmethod
-    def setUpClass(cls):
-        reportWhichExecutable(cls.pgm)
        
     def setUp(self):
         self.SAMPLEFILE = tmpFile('sampleFile.txt')
@@ -130,7 +134,8 @@ class GetSamples_tests(unittest.TestCase):
             os.remove(self.SAMPLEFILE)
         
     def test_withSampleDataLib_find0(self):
-        # ID that is not in the sampleSet - should return 0 samples
+        """ Test getSamples.py w/ 0 matching IDs in the sampleSet
+        """
         cmd = '%s %s --oneline 64 < %s' \
         % (self.pgm, SAMPLEDATALIBPARAM, self.SAMPLEFILE, )
 
@@ -142,7 +147,8 @@ class GetSamples_tests(unittest.TestCase):
         self.assertEqual(numLines, 0)
 
     def test_withSampleDataLib_find2(self):
-        # 2 IDs in the sampleSet
+        """ Test getSamples.py w/ 2 matching IDs in the sampleSet
+        """
         cmd = '%s %s --oneline 3 7 < %s' \
         % (self.pgm, SAMPLEDATALIBPARAM, self.SAMPLEFILE, )
 
@@ -157,9 +163,6 @@ class GetSamples_tests(unittest.TestCase):
 
 class Predict_tests(unittest.TestCase):
     pgm = 'predict.py'
-    @classmethod
-    def setUpClass(cls):
-        reportWhichExecutable(cls.pgm)
        
     def setUp(self):
         self.PIPELINEFILE = 'testPipeline.py'
@@ -171,8 +174,6 @@ class Predict_tests(unittest.TestCase):
         sampleSet.write(self.SAMPLEFILE)
 
     def tearDown(self):
-        # would be nice to know if any tests failed, and keep these files if
-        # so. But I don't see how to do that yet.
         if REMOVETMPFILES:
             os.remove(self.SAMPLEFILE)
             os.remove(self.MODELFILE)
@@ -203,9 +204,6 @@ class Predict_tests(unittest.TestCase):
 
 class PreprocessSamples_tests(unittest.TestCase):
     pgm = 'preprocessSamples.py'
-    @classmethod
-    def setUpClass(cls):
-        reportWhichExecutable(cls.pgm)
        
     def setUp(self):
         self.SAMPLEFILE = tmpFile('sampleFile.txt')
@@ -214,8 +212,6 @@ class PreprocessSamples_tests(unittest.TestCase):
         sampleSet.write(self.SAMPLEFILE)
 
     def tearDown(self):
-        # would be nice to know if any tests failed, and keep these files if
-        # so. But I don't see how to do that yet.
         if REMOVETMPFILES:
             os.remove(self.SAMPLEFILE)
             os.remove(self.OUTPUTFILE)
@@ -232,9 +228,6 @@ class PreprocessSamples_tests(unittest.TestCase):
 
 class SplitSamples_tests(unittest.TestCase):
     pgm = 'splitSamples.py'
-    @classmethod
-    def setUpClass(cls):
-        reportWhichExecutable(cls.pgm)
        
     def setUp(self):
         self.SAMPLEFILE   = tmpFile('sampleFile.txt')
@@ -269,9 +262,6 @@ class SplitSamples_tests(unittest.TestCase):
 
 class TrainModel_tests(unittest.TestCase):
     pgm = 'trainModel.py'
-    @classmethod
-    def setUpClass(cls):
-        reportWhichExecutable(cls.pgm)
        
     def setUp(self):
         self.PIPELINEFILE  = 'testPipeline.py'

@@ -45,8 +45,7 @@ PYTHONPATH=$prependPyPath:$PYTHONPATH
 date
 echo PATH=$PATH
 echo PYTHONPATH=$PYTHONPATH
+echo
 
-for tf in $testFiles; do
-    echo Running $tf
-    python $tf $verbose 2>&1
-done
+python -m unittest $verbose $testFiles 2>&1
+exit $?
