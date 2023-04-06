@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
-# tests for the scripts in MLtextTools/bin
+# tests for the scripts in MLtextTools/bin and a test tuningScript.py
 # to run:   python test_bin.py [-v]
 
 import sys
@@ -14,19 +14,21 @@ from testSample import *
 """
 These tests run programs in MLtextTools/bin via runShCommand.
 
-If you run these with -v, the tests output each shell command run and its
+If you run with -v, the tests output each shell command run and its
 stdout and stderr so you can see what is going on.
 
 They use
-    testSample.py, a sampleDataLib, that defines a TestSample Class.
-    testPipeline.py that defines a Pipeline to train.
+    testSample.py   - a sampleDataLib, defines a ClassifiedTestSample Class.
+    testPipeline.py - defines a Pipeline to train.
+    tuningScript.py - an example tuning script
+    tuning.cfg      - a config file for tuningScript.py
 
 They generate sample files, trained model pkl files, and other output files
-from trainModel.py and predict.py.
+from trainModel.py, predict.py, and tuningScript.py.
 
-All generated files get put in ./tmp/
+All generated files get put in ./tmp/ - so you can delete these as needed.
 
-At the moment, all the tests just check the return code from running the
+At the moment, most of the tests just check the return code from running the
 scripts and succeed if it is zero.
 We don't yet do much validation of the generated files.
 """
@@ -288,6 +290,88 @@ class TrainModel_tests(unittest.TestCase):
         reportCmdDetails(cmd, retCode, stout, sterr)
         self.assertEqual(retCode, 0)
 # end class TrainModel_tests --------------------------------------------
+
+class TuningScript_tests(unittest.TestCase):
+    pgm = './tuningScript.py'
+       
+    def setUp(self):
+        self.TRAININGFILE   = tmpFile('trainingFile.txt')
+        self.VALIDATIONFILE = tmpFile('validFile.txt')
+        self.MODELFILE      = tmpFile('tuningScript.pkl')
+        self.INDEXFILE      = tmpFile('index.out')
+        self.OUTPUTPREFIX   = './tmp/tuningScript'
+        populateSampleSet()
+        sampleSet.write(self.TRAININGFILE)
+        sampleSet.write(self.VALIDATIONFILE)
+
+    def tearDown(self):
+        if REMOVETMPFILES:
+            os.remove(self.TRAININGFILE)
+            os.remove(self.VALIDATIONFILE)
+            os.remove(self.OUTPUTPKLFILE)
+            os.remove(self.FEATUREFILE)
+        
+    def test_validationSet(self):
+        """ Test using a validation set """
+        cmd = ' '.join([
+                    self.pgm,
+                    '--trainpath %s' % self.TRAININGFILE,
+                    '--valpath %s'   % self.VALIDATIONFILE,
+                    '--indexfile %s' % self.INDEXFILE,
+                    '--savemodel %s' % self.MODELFILE,
+                    '--outprefix %s' % self.OUTPUTPREFIX,
+                    '--verbose',
+                    '--index',
+                    '--predict',
+                    '--features',
+                    '--rclassifier 783',
+                    '--rsplit 515',
+                    ])
+        retCode, stout, sterr = runShCommand(cmd)
+        reportCmdDetails(cmd, retCode, stout, sterr)
+        self.assertEqual(retCode, 0)
+        
+    def test_validationAndTestSet(self):
+        """ Test using a validation and test set """
+        cmd = ' '.join([
+                    self.pgm,
+                    '--trainpath %s' % self.TRAININGFILE,
+                    '--valpath %s'   % self.VALIDATIONFILE,
+                    '--testpath %s'  % self.VALIDATIONFILE, # use validation set
+                    '--indexfile %s' % self.INDEXFILE,
+                    '--savemodel %s' % self.MODELFILE,
+                    '--outprefix %s' % self.OUTPUTPREFIX,
+                    '--verbose',
+                    '--index',
+                    '--predict',
+                    '--features',
+                    '--rclassifier 783',
+                    '--rsplit 515',
+                    ])
+        retCode, stout, sterr = runShCommand(cmd)
+        reportCmdDetails(cmd, retCode, stout, sterr)
+        self.assertEqual(retCode, 0)
+        
+    def test_noValidationSet(self):
+        """ Test using cross validation """
+        cmd = ' '.join([
+                    self.pgm,
+                    '--trainpath %s' % self.TRAININGFILE,
+                    '--valpath %s'   % 'None',
+                    '--indexfile %s' % self.INDEXFILE,
+                    '--savemodel %s' % self.MODELFILE,
+                    '--outprefix %s' % self.OUTPUTPREFIX,
+                    '--verbose',
+                    '--index',
+                    '--predict',
+                    '--features',
+                    '--rclassifier 783',
+                    '--rsplit 515',
+                    ])
+        retCode, stout, sterr = runShCommand(cmd)
+        reportCmdDetails(cmd, retCode, stout, sterr)
+        self.assertEqual(retCode, 0)
+# end class TuningScript_tests --------------------------------------------
 
 if __name__ == '__main__':
     unittest.main()

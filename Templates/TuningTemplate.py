@@ -1,5 +1,6 @@
-import textTuningLib as tl
-import sklearnHelperLib as skHelper
+#!/usr/bin/env python
+import MLtuning as tl
+import MLsklearnHelper as skHelper
 from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.preprocessing import StandardScaler, MaxAbsScaler
