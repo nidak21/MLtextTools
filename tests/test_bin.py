@@ -35,7 +35,6 @@ We don't yet do much validation of the generated files.
 
 # global settings
 TMPDIR = './tmp'            # path to tmp directory for generated files
-REMOVETMPFILES = False      # should we delete generated tmp files, after tests?
 beVerbose = '-v' in sys.argv    # how much test output to write to stderr
 SAMPLEDATALIB = './testSample.py'  # location of the test sampledata lib
 SAMPLEDATALIBPARAM = '--sampledatalib %s' % SAMPLEDATALIB
@@ -129,12 +128,6 @@ class GetSamples_tests(unittest.TestCase):
         populateSampleSet()
         sampleSet.write(self.SAMPLEFILE)
 
-    def tearDown(self):
-        # would be nice to know if any tests failed, and keep these files if
-        # so. But I don't see how to do that yet.
-        if REMOVETMPFILES:
-            os.remove(self.SAMPLEFILE)
-        
     def test_withSampleDataLib_find0(self):
         """ Test getSamples.py w/ 0 matching IDs in the sampleSet
         """
@@ -175,13 +168,6 @@ class Predict_tests(unittest.TestCase):
         populateSampleSet()
         sampleSet.write(self.SAMPLEFILE)
 
-    def tearDown(self):
-        if REMOVETMPFILES:
-            os.remove(self.SAMPLEFILE)
-            os.remove(self.MODELFILE)
-            os.remove(self.PREDICTIONS)
-            os.remove(self.PERFORMANCE)
-        
     def trainModel(self):
         cmd = 'trainModel.py -m %s -o %s %s %s' \
         % (self.PIPELINEFILE, self.MODELFILE, SAMPLEDATALIBPARAM,
@@ -213,11 +199,6 @@ class PreprocessSamples_tests(unittest.TestCase):
         populateSampleSet()
         sampleSet.write(self.SAMPLEFILE)
 
-    def tearDown(self):
-        if REMOVETMPFILES:
-            os.remove(self.SAMPLEFILE)
-            os.remove(self.OUTPUTFILE)
-        
     def test_withSampleDataLib(self):
         # just a simple preprocessing step
         cmd = '%s -p tokenPerLine %s %s > %s' \
@@ -238,14 +219,6 @@ class SplitSamples_tests(unittest.TestCase):
         populateSampleSet()
         sampleSet.write(self.SAMPLEFILE)
 
-    def tearDown(self):
-        # would be nice to know if any tests failed, and keep these files if
-        # so. But I don't see how to do that yet.
-        if REMOVETMPFILES:
-            os.remove(self.SAMPLEFILE)
-            os.remove(self.RETAINEDFILE)
-            os.remove(self.LEFTOVERFILE)
-        
     def test_withSampleDataLib(self):
         # via a few tries, this seed splits into 3 retained, 7 leftovers
         cmd = '%s %s -f .25 --seed 1 --retainedfile %s --leftoverfile %s %s' \
@@ -273,14 +246,6 @@ class TrainModel_tests(unittest.TestCase):
         populateSampleSet()
         sampleSet.write(self.SAMPLEFILE)
 
-    def tearDown(self):
-        # would be nice to know if any tests failed, and keep these files if
-        # so. But I don't see how to do that yet.
-        if REMOVETMPFILES:
-            os.remove(self.SAMPLEFILE)
-            os.remove(self.OUTPUTPKLFILE)
-            os.remove(self.FEATUREFILE)
-        
     def test_withSampleDataLib(self):
         cmd = '%s -m %s -o %s -f %s %s %s' \
         % (self.pgm, self.PIPELINEFILE, self.OUTPUTPKLFILE, self.FEATUREFILE,
@@ -304,13 +269,6 @@ class TuningScript_tests(unittest.TestCase):
         sampleSet.write(self.TRAININGFILE)
         sampleSet.write(self.VALIDATIONFILE)
 
-    def tearDown(self):
-        if REMOVETMPFILES:
-            os.remove(self.TRAININGFILE)
-            os.remove(self.VALIDATIONFILE)
-            os.remove(self.OUTPUTPKLFILE)
-            os.remove(self.FEATUREFILE)
-        
     def test_validationSet(self):
         """ Test using a validation set """
         cmd = ' '.join([
