@@ -24,7 +24,7 @@ Example Usage:
     for figText in legendsAndFigWords(text, numWords=75):
         ...
 
-To run automated tests:   python test_figureText.py [-v]
+To run automated tests:   python test_MLsciLitText.py [-v]
 
 #######################################################################
 """
@@ -32,12 +32,12 @@ To run automated tests:   python test_figureText.py [-v]
 import re
 from MLtextUtils import spacedOutRegex
 
-DEFAULT_PARA_BND = '\n\n'	# default paragraph boundary
+DEFAULT_PARA_BND = '\n\n'	# default string that means paragraph boundary
 
 def paragraphs(text,                     # string to search for paragraphs
-               paraBnd=DEFAULT_PARA_BND, # paragraph boundary string
+               paraBnd=DEFAULT_PARA_BND, # the string that means paragr boundary
     ):
-    """ iterate through the paragraphs in text.
+    """ Generator to iterate through the paragraphs in text.
         The paraBnd is removed, and the returned paragraphs are stripped().
         Any stripped() paragraph that is the empty string is skipped and not
         returned.
@@ -78,13 +78,15 @@ legendRe = re.compile(\
         re.IGNORECASE)
 #---------------------------------
 
-def text2FigText_Legend(text,
+def legends(text,
+            paraBnd=DEFAULT_PARA_BND, # string that means paragraph boundary
     ):
+    """ Return a generator to iterate through the figure/table legends in text.
+        A legend starts with some variation of "figure" or "table" and ends
+        with a paraBnd string.
+        The paraBnd is removed, and the returned legends are stripped().
     """
-    Return list of paragraphs in text that are figure or table legends
-    (paragraph starts with "fig" or "table")
-    """
-    return [ p for p in paragraphs(text) if legendRe.match(p) ]
+    return (p for p in paragraphs(text, paraBnd=paraBnd) if legendRe.match(p))
 #---------------------------------
 
 def text2FigText_LegendAndParagraph(text,):
