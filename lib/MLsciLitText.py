@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-
 """
 #######################################################################
-Author:  Jim
+Author:  Jim Kadin
 Routines for
   * iteratoring through the paragraphs of a piece of text,
-  * iteratoring through the fig and tbl legend paragraphs
+  * iteratoring through the fig and tbl legends
   * iteratoring through the fig & tbl legends and paragraphs that refer to
     legends
   * iteratoring through the fig & tbl legends and parts of paragraphs that
@@ -25,7 +24,6 @@ Example Usage:
         ...
 
 To run automated tests:   python test_MLsciLitText.py [-v]
-
 #######################################################################
 """
 
@@ -89,36 +87,35 @@ def legends(text,
     return (p for p in paragraphs(text, paraBnd=paraBnd) if legendRe.match(p))
 #---------------------------------
 
-def text2FigText_LegendAndParagraph(text,):
+def legendsAndFigParagraphs(text,
+            paraBnd=DEFAULT_PARA_BND, # string that means paragraph boundary
+    ):
+    """ Return a generator to iterate through the figure/table legends and
+        all paragraphs in text that talk about figures or tables.
+        The paraBnd is removed, and returned legends/paragraphs are stripped().
     """
-    Return list of paragraphs in text that talk about figures or tables
-    (includes legends)
-    """
-    figParagraphs = []
-
-    for p in paragraphs(text):
-        if legendRe.match(p) or figureRe.search(p):
-            figParagraphs.append(p)
-
-    return figParagraphs
+    return (p for p in paragraphs(text, paraBnd=paraBnd) \
+                        if legendRe.match(p) or figureRe.search(p))
 #---------------------------------
 
-def text2FigText_LegendAndWords(text, numWords=50,):
+def legendsAndFigWords(text,
+            paraBnd=DEFAULT_PARA_BND, # string that means paragraph boundary
+            numWords=50,              # num words around fig/tbl refs to keep
+    ):
+    """ Generator to iterate through the figure/table legends and
+        parts of paragraphs that talk about figures/tables.
+        The "parts" are defined by 'numWords' words surrounding figure/table
+          references. All the "parts" of each paragraph are joined by ' '
+          and returned as one abridged paragraph.
+        The paraBnd is removed, and returned legends/paragraphs are stripped().
     """
-    Return list of (full) legends and parts of paragraphs that talk about
-      figures or tables
-    The "parts" are defined by 'numWords' words surrounding figure/table
-      references
-    """
-    figParagraphs = []
-
-    for p in paragraphs(text):
+    for p in paragraphs(text, paraBnd=paraBnd):
         if legendRe.match(p):		# have figure/table legend
-            figParagraphs.append(p)
+            yield p
         else:				# not legend, get parts
-            figParagraphs += getFigureBlurbs(p, numWords)
-
-    return figParagraphs
+            blurbs = getFigureBlurbs(p, numWords)
+            if blurbs:
+                yield ' '.join(blurbs)
 #---------------------------------
 
 def getFigureBlurbs(text, numWords=50,):
