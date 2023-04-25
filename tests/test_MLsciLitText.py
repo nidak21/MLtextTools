@@ -140,24 +140,26 @@ class LegsAndFigWords_tests(unittest.TestCase):
                             'Supp lem ental Data Figure 9.',
                             ]) + paraBnd
                                         # grab legends and blurbs w/ 2 words
-        legs = list(legendsAndFigWords(text, paraBnd=paraBnd, numWords=2))
+        legs = list(legendsAndFigWords(text, paraBnd=paraBnd, numWords=2,
+                    blurbJoin='-'))
         self.assertEqual(len(legs), 9)
         self.assertEqual(legs[0], 'Figure 1 blah. take whole paragraph.')
         self.assertEqual(legs[1], 'a figure paragraph 2.')
         self.assertEqual(legs[2], 'In Figures 2 and')
         self.assertEqual(legs[3], 'the paragraph fig')
         self.assertEqual(legs[4], 'a figs and more tables blurb paragraph')
-        self.assertEqual(legs[5], 'two blurbs: table b1.1 b1.2 b2.1 b2.2 fig')
+        self.assertEqual(legs[5], 'two blurbs: table b1.1 b1.2-b2.1 b2.2 fig')
 
                                         # grab legends and blurbs w/ 1 words
-        legs = list(legendsAndFigWords(text, paraBnd=paraBnd, numWords=1))
+        legs = list(legendsAndFigWords(text, paraBnd=paraBnd, numWords=1,
+                    blurbJoin='-'))
         self.assertEqual(len(legs), 9)
         self.assertEqual(legs[0], 'Figure 1 blah. take whole paragraph.')
         self.assertEqual(legs[1], 'a figure paragraph')
         self.assertEqual(legs[2], 'In Figures 2')
         self.assertEqual(legs[3], 'paragraph fig')
-        self.assertEqual(legs[4], 'a figs and more tables blurb')
-        self.assertEqual(legs[5], 'blurbs: table b1.1 b2.2 fig')
+        self.assertEqual(legs[4], 'a figs and-more tables blurb')
+        self.assertEqual(legs[5], 'blurbs: table b1.1-b2.2 fig')
 # end class LegsAndFigWords_tests ----------------------------------
 
 if __name__ == '__main__':

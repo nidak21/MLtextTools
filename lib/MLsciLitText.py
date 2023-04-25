@@ -40,8 +40,9 @@ def paragraphs(text,                     # string to search for paragraphs
         Any stripped() paragraph that is the empty string is skipped and not
         returned.
     """
-    for par in text.split(paraBnd):
-        p = par.strip()
+    #for par in text.split(paraBnd):
+    #    p = par.strip()
+    for p in map(str.strip, text.split(paraBnd)):
         if p: yield(p)
 #---------------------------------
 
@@ -101,11 +102,12 @@ def legendsAndFigParagraphs(text,
 def legendsAndFigWords(text,
             paraBnd=DEFAULT_PARA_BND, # string that means paragraph boundary
             numWords=50,              # num words around fig/tbl refs to keep
+            blurbJoin=' .. ',         # text to join paragraph parts
     ):
     """ Generator to iterate through the figure/table legends and
         parts of paragraphs that talk about figures/tables.
         The "parts" are defined by 'numWords' words surrounding figure/table
-          references. All the "parts" of each paragraph are joined by ' '
+          references. All the "parts" of each paragraph are joined by blurbJoin
           and returned as one abridged paragraph.
         The paraBnd is removed, and returned legends/paragraphs are stripped().
     """
@@ -115,7 +117,7 @@ def legendsAndFigWords(text,
         else:				# not legend, get parts
             blurbs = getFigureBlurbs(p, numWords)
             if blurbs:
-                yield ' '.join(blurbs)
+                yield blurbJoin.join(blurbs)
 #---------------------------------
 
 def getFigureBlurbs(text, numWords=50,):
@@ -125,7 +127,7 @@ def getFigureBlurbs(text, numWords=50,):
     """
     matches = list(figureRe.finditer(text))	# all matches of fig/tbl words
 
-    if len(matches) == 0: return []
+    if not matches: return []
 
     blurbs = []				# text blurbs to return
 
